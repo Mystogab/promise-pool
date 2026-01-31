@@ -1,6 +1,6 @@
 {
   "name": "@mystogab/promise-pool",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -36,5 +36,14 @@
     "email": "gabriel.desimone@mail.com",
     "url": "https://github.com/Mystogab"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [ 
+    "promise-pool",
+    "nodejs",
+    "async",
+    "map",
+    "async-map",
+    "promises",
+    "concurrency"
+  ]
 }

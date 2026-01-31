@@ -85,3 +85,15 @@ console.timeEnd('Pool Speed');
 
 ## License
 MIT © [@Mystogab]
+## Changelog
+
+### [1.0.1] - 2026-01-31
+- Added project keywords
+
+### [1.0.0] - 2026-01-31
+- Initial release
+- Core promise pool functionality with dynamic worker queue
+- Support for Iterable and AsyncIterable inputs
+- POOL_STOP_SIGNAL for graceful termination
+- Dual ESM/CommonJS build support
+- Zero dependencies
