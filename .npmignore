@@ -1,0 +1,5 @@
+src/*.test.ts
+tsup.config.ts
+tsconfig.json
+node_modules
+.github

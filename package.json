@@ -12,15 +12,28 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "tsc"
+    "lint": "tsc",
+    "prepublishOnly": "npm run test && npm run build"
   },
   "devDependencies": {
+    "@types/node": "^25.1.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
-  }
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "author": {
+    "name": "Gabriel Desimone",
+    "email": "gabriel.desimone@mail.com",
+    "url": "https://github.com/Mystogab"
+  },
+  "license": "MIT"
 }
