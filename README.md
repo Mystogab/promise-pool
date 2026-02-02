@@ -74,6 +74,12 @@ Parameters:
 - `concurrency`: `number` (Default: `2`) - Max number of simultaneous tasks.
 - `errorHandler`: `(error: any, item: T) => void | Promise<void> | typeof POOL_STOP_SIGNAL` - Optional handler for custom logic on failure.
 
+Returns: `Promise<PoolResult<T, R>>`
+- `results`: `R[]` - Array of successful results in the order they were processed.
+- `errors`: `Error[]` - Array of errors encountered during processing.
+- `failedItems`: `T[]` - Array of items that failed to process.
+- `stoppedPrematurely`: `boolean` - Whether the pool was stopped early via `POOL_STOP_SIGNAL`.
+
 ## Benchmarking
 You can measure the performance in your own environment:
 
@@ -86,6 +92,12 @@ console.timeEnd('Pool Speed');
 ## License
 MIT © [@Mystogab]
 ## Changelog
+
+### [1.1.0] - 2026-02-02
+- Added input validation function `_validateInput` to ensure all parameters are correct
+- Added needed unit tests
+- Added comprehensive test suite for parameter validation
+- Added `Returns` section to API Reference documentation
 
 ### [1.0.1] - 2026-01-31
 - Added project keywords

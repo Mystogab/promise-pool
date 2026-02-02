@@ -2,6 +2,74 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import { promisePool, POOL_STOP_SIGNAL } from './index.ts';
 
+describe('_validateInput', () => {
+  test('should throw when input is missing', async () => {
+    const task = async (n: number) => n;
+    
+    await assert.rejects(
+      () => promisePool(null as any, task, 2),
+      { message: 'input is required' }
+    );
+  });
+
+  test('should throw when iteratorFn is not a function', async () => {
+    const items = [1, 2, 3];
+    
+    await assert.rejects(
+      () => promisePool(items, 'not a function' as any, 2),
+      { message: 'iteratorFn must be a function' }
+    );
+  });
+
+  test('should throw when concurrency is not a positive number', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n;
+    
+    await assert.rejects(
+      () => promisePool(items, task, 0),
+      { message: 'concurrency must be a positive number' }
+    );
+  });
+
+  test('should throw when concurrency is negative', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n;
+    
+    await assert.rejects(
+      () => promisePool(items, task, -5),
+      { message: 'concurrency must be a positive number' }
+    );
+  });
+
+  test('should throw when concurrency is not a number', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n;
+    
+    await assert.rejects(
+      () => promisePool(items, task, 'not a number' as any),
+      { message: 'concurrency must be a positive number' }
+    );
+  });
+
+  test('should throw when errorHandler is not a function or undefined', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n;
+    
+    await assert.rejects(
+      () => promisePool(items, task, 2, 'not a function' as any),
+      { message: 'errorHandler must be a function' }
+    );
+  });
+
+  test('should allow undefined errorHandler', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n * 2;
+    
+    const { results } = await promisePool(items, task, 2, undefined);
+    assert.strictEqual(results.length, 3);
+  });
+});
+
 describe('promisePool', () => {
   
   test('should process all items successfully (Happy Path)', async () => {

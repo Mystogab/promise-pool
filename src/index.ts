@@ -1,6 +1,21 @@
+import assert from "node:assert";
+
 export const POOL_STOP_SIGNAL = Symbol('POOL_STOP_SIGNAL');
 
 type ErrorHandler<T, E = any> = (error: E, item: T) => void | Promise<void> | typeof POOL_STOP_SIGNAL;
+
+const _validateInput = <T, R>(
+  input: Iterable<T> | AsyncIterable<T>,
+  iteratorFn: (input: T) => Promise<R>,
+  concurrency: number,
+  errorHandler?: ErrorHandler<T>
+) => {
+  assert(input, 'input is required');
+  assert(typeof iteratorFn === 'function', 'iteratorFn must be a function');
+  assert(typeof concurrency === 'number' && concurrency > 0, 'concurrency must be a positive number');
+  assert(!errorHandler || typeof errorHandler === 'function', 'errorHandler must be a function');
+};
+
 
 export const promisePool = async <T, R>(
   input: Iterable<T> | AsyncIterable<T>,
@@ -8,6 +23,7 @@ export const promisePool = async <T, R>(
   concurrency = 2,
   errorHandler?: ErrorHandler<T>
 ) => {
+  _validateInput(input, iteratorFn, concurrency, errorHandler);
   const results: R[] = [];
   const failedItems: T[] = [];
   const errors: Error[] = [];
