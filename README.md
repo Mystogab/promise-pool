@@ -2,9 +2,9 @@
 
 A lightweight, high-performance, and memory-efficient asynchronous pool for JavaScript and TypeScript. Designed for **modern Node.js** environments (20+).
 
-[![npm version](https://img.shields.io)](https://www.npmjs.com)
-[![License: MIT](https://img.shields.io)](https://opensource.org)
-![Bundle Size](https://img.shields.io)
+[![npm version](https://img.shields.io/npm/v/@mystogab/promise-pool)](https://www.npmjs.com)
+[![License: MIT](https://img.shields.io/npm/l/@mystogab/promise-pool)](https://opensource.org)
+![Bundle Size](https://img.shields.io/bundlephobia/min/%40mystogab%2Fpromise-pool)
 
 ## Why Promise Pool?
 
@@ -93,16 +93,21 @@ console.timeEnd('Pool Speed');
 MIT © [@Mystogab]
 ## Changelog
 
-### [1.1.0] - 2026-02-02
+### **v1.1.1** | 2026-03-03
+- Added GitHub link reference
+- Fixed documentation badges
+- Modified changelog style
+
+### **v1.1.0** | 2026-02-02
 - Added input validation function `_validateInput` to ensure all parameters are correct
 - Added needed unit tests
 - Added comprehensive test suite for parameter validation
 - Added `Returns` section to API Reference documentation
 
-### [1.0.1] - 2026-01-31
+### **v1.0.1** | 2026-01-31
 - Added project keywords
 
-### [1.0.0] - 2026-01-31
+### **v1.0.0** | 2026-01-31
 - Initial release
 - Core promise pool functionality with dynamic worker queue
 - Support for Iterable and AsyncIterable inputs
