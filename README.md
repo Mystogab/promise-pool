@@ -93,10 +93,11 @@ console.timeEnd('Pool Speed');
 MIT © [@Mystogab]
 ## Changelog
 
-### **v1.1.1** | 2026-03-03
+### **v1.1.2** | 2026-02-03
 - Added GitHub link reference
 - Fixed documentation badges
 - Modified changelog style
+- Small typo fix
 
 ### **v1.1.0** | 2026-02-02
 - Added input validation function `_validateInput` to ensure all parameters are correct
