@@ -7,7 +7,7 @@ describe('_validateInput', () => {
     const task = async (n: number) => n;
     
     await assert.rejects(
-      () => promisePool(null as any, task, 2),
+      () => promisePool({ input: null as any, iteratorFn: task, concurrency: 2 }),
       { message: 'input is required' }
     );
   });
@@ -16,7 +16,7 @@ describe('_validateInput', () => {
     const items = [1, 2, 3];
     
     await assert.rejects(
-      () => promisePool(items, 'not a function' as any, 2),
+      () => promisePool({ input: items, iteratorFn: 'not a function' as any, concurrency: 2 }),
       { message: 'iteratorFn must be a function' }
     );
   });
@@ -26,7 +26,7 @@ describe('_validateInput', () => {
     const task = async (n: number) => n;
     
     await assert.rejects(
-      () => promisePool(items, task, 0),
+      () => promisePool({ input: items, iteratorFn: task, concurrency: 0 }),
       { message: 'concurrency must be a positive number' }
     );
   });
@@ -36,7 +36,7 @@ describe('_validateInput', () => {
     const task = async (n: number) => n;
     
     await assert.rejects(
-      () => promisePool(items, task, -5),
+      () => promisePool({ input: items, iteratorFn: task, concurrency: -5 }),
       { message: 'concurrency must be a positive number' }
     );
   });
@@ -46,7 +46,7 @@ describe('_validateInput', () => {
     const task = async (n: number) => n;
     
     await assert.rejects(
-      () => promisePool(items, task, 'not a number' as any),
+      () => promisePool({ input: items, iteratorFn: task, concurrency: 'not a number' as any }),
       { message: 'concurrency must be a positive number' }
     );
   });
@@ -56,7 +56,7 @@ describe('_validateInput', () => {
     const task = async (n: number) => n;
     
     await assert.rejects(
-      () => promisePool(items, task, 2, 'not a function' as any),
+      () => promisePool({ input: items, iteratorFn: task, concurrency: 2, errorHandler: 'not a function' as any }),
       { message: 'errorHandler must be a function' }
     );
   });
@@ -65,7 +65,7 @@ describe('_validateInput', () => {
     const items = [1, 2, 3];
     const task = async (n: number) => n * 2;
     
-    const { results } = await promisePool(items, task, 2, undefined);
+    const { results } = await promisePool({ input: items, iteratorFn: task, concurrency: 2, errorHandler: undefined });
     assert.strictEqual(results.length, 3);
   });
 });
@@ -76,7 +76,7 @@ describe('promisePool', () => {
     const items = [1, 2, 3];
     const task = async (n: number) => n * 2;
     
-    const { results, errors } = await promisePool(items, task, 2);
+    const { results, errors } = await promisePool({ input: items, iteratorFn: task, concurrency: 2 });
     
     assert.strictEqual(results.length, 3);
     assert.deepStrictEqual(results.sort(), [2, 4, 6]);
@@ -95,7 +95,7 @@ describe('promisePool', () => {
       activeTasks--;
     };
 
-    await promisePool([1, 2, 3, 4, 5], task, concurrency);
+    await promisePool({ input: [1, 2, 3, 4, 5], iteratorFn: task, concurrency });
     
     assert.strictEqual(maxParallel, concurrency, `Should not exceed ${concurrency} parallel tasks`);
   });
@@ -106,7 +106,7 @@ describe('promisePool', () => {
       yield 'b';
     }
     
-    const { results } = await promisePool(asyncGen(), async (s) => s.toUpperCase());
+    const { results } = await promisePool({ input: asyncGen(), iteratorFn: async (s) => s.toUpperCase() });
     assert.deepStrictEqual(results.sort(), ['A', 'B']);
   });
 
@@ -117,7 +117,7 @@ describe('promisePool', () => {
       return item;
     };
 
-    const { results, errors, failedItems } = await promisePool(items, task);
+    const { results, errors, failedItems } = await promisePool({ input: items, iteratorFn: task });
 
     assert.strictEqual(results.length, 2);
     assert.strictEqual(errors.length, 1);
@@ -129,23 +129,23 @@ describe('promisePool', () => {
     const items = [1, 2, 3];
     let callCount = 0;
 
-    await promisePool(
-      items,
-      async () => { 
+    await promisePool({
+      input: items,
+      iteratorFn: async () => { 
         callCount++; 
         throw new Error('Stop'); 
       },
-      1,
+      concurrency: 1,
       // Asegúrate de que retorne exactamente el símbolo
-      () => POOL_STOP_SIGNAL 
-    );
+      errorHandler: () => POOL_STOP_SIGNAL 
+    });
 
     assert.strictEqual(callCount, 1);
   });
 
 
   test('should handle empty input', async () => {
-    const { results } = await promisePool([], async (i) => i);
+    const { results } = await promisePool({ input: [], iteratorFn: async (i) => i });
     assert.deepStrictEqual(results, []);
   });
 
@@ -153,15 +153,15 @@ describe('promisePool', () => {
     let handlerWaited = false;
     const items = [1];
     
-    await promisePool(
-      items,
-      async () => { throw new Error(); },
-      1,
-      async () => {
+    await promisePool({
+      input: items,
+      iteratorFn: async () => { throw new Error(); },
+      concurrency: 1,
+      errorHandler: async () => {
         await new Promise(res => setTimeout(res, 20));
         handlerWaited = true;
       }
-    );
+    });
 
     assert.strictEqual(handlerWaited, true);
   });

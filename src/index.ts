@@ -17,12 +17,17 @@ const _validateInput = <T, R>(
 };
 
 
-export const promisePool = async <T, R>(
-  input: Iterable<T> | AsyncIterable<T>,
-  iteratorFn: (input: T) => Promise<R>,
+export const promisePool = async <T, R>({
+  input,
+  iteratorFn,
   concurrency = 2,
-  errorHandler?: ErrorHandler<T>
-) => {
+  errorHandler,
+}: {
+  input: Iterable<T> | AsyncIterable<T>;
+  iteratorFn: (input: T) => Promise<R>;
+  concurrency?: number;
+  errorHandler?: ErrorHandler<T>;
+}) => {
   _validateInput(input, iteratorFn, concurrency, errorHandler);
   const results: R[] = [];
   const failedItems: T[] = [];

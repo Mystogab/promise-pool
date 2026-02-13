@@ -33,7 +33,11 @@ const task = async (id) => {
   return `Result ${id}`;
 };
 
-const { results } = await promisePool(items, task, 2);
+const { results } = await promisePool({
+  input: items,
+  iteratorFn: task,
+  concurrency: 2
+});
 console.log(results);
 ```
 
@@ -43,18 +47,18 @@ You can stop the entire pool if a critical error occurs (e.g., Auth Token expire
 ```typescript
 import { promisePool, POOL_STOP_SIGNAL } from '@mystogab/promise-pool';
 
-const { results, stoppedPrematurely } = await promisePool(
-  hugeDataset,
-  processData,
-  5, // Concurrency
-  async (error, item) => {
+const { results, stoppedPrematurely } = await promisePool({
+  input: hugeDataset,
+  iteratorFn: processData,
+  concurrency: 5,
+  errorHandler: async (error, item) => {
     if (error.status === 401) {
       console.error("Critical error! Stopping pool...");
       return POOL_STOP_SIGNAL;
     }
     console.warn(`Failed item ${item.id}: ${error.message}`);
   }
-);
+});
 ```
 ## Performance Comparison
 
@@ -66,13 +70,14 @@ const { results, stoppedPrematurely } = await promisePool(
 | Stop Signal | No | Manual/Complex | Elegant Symbol Signal |
 
 ## API Reference
-`promisePool<T, R>(input, iteratorFn, concurrency?, errorHandler?)`
 
-Parameters:
+### `promisePool<T, R>(options)`
+
+Options object parameters:
 - `input`: `Iterable<T> | AsyncIterable<T>` - The data to process.
 - `iteratorFn`: `(item: T) => Promise<R>` - The async function to run for each item.
 - `concurrency`: `number` (Default: `2`) - Max number of simultaneous tasks.
-- `errorHandler`: `(error: any, item: T) => void | Promise<void> | typeof POOL_STOP_SIGNAL` - Optional handler for custom logic on failure.
+- `errorHandler`: `(error: any, item: T) => void | Promise<void> | typeof POOL_STOP_SIGNAL` (Optional) - Handler for custom logic on failure.
 
 Returns: `Promise<PoolResult<T, R>>`
 - `results`: `R[]` - Array of successful results in the order they were processed.
@@ -92,6 +97,13 @@ console.timeEnd('Pool Speed');
 ## License
 MIT © [@Mystogab]
 ## Changelog
+
+### **v2.0.0** | 2026-02-13
+- **BREAKING:** Changed API to use named parameters instead of positional arguments
+- Updated `promisePool()` to accept a single options object with `input`, `iteratorFn`, `concurrency`, and `errorHandler` properties
+- Improved type safety and code clarity with explicit parameter names
+- Updated all documentation examples and API reference
+- Updated comprehensive test suite to match new API
 
 ### **v1.1.2** | 2026-02-03
 - Added GitHub link reference
