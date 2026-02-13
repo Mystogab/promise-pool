@@ -3,70 +3,65 @@ import assert from 'node:assert';
 import { promisePool, POOL_STOP_SIGNAL } from './index.ts';
 
 describe('_validateInput', () => {
-  test('should throw when input is missing', async () => {
+  test('should return error when input is missing', async () => {
     const task = async (n: number) => n;
     
-    await assert.rejects(
-      () => promisePool({ input: null as any, iteratorFn: task, concurrency: 2 }),
-      { message: 'input is required' }
-    );
+    const { errors } = await promisePool({ input: null as any, iteratorFn: task, concurrency: 2 });
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'input is required');
   });
 
-  test('should throw when iteratorFn is not a function', async () => {
+  test('should return error when iteratorFn is not a function', async () => {
     const items = [1, 2, 3];
     
-    await assert.rejects(
-      () => promisePool({ input: items, iteratorFn: 'not a function' as any, concurrency: 2 }),
-      { message: 'iteratorFn must be a function' }
-    );
+    const { errors } = await promisePool({ input: items, iteratorFn: 'not a function' as any, concurrency: 2 });
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'iteratorFn must be a function');
   });
 
-  test('should throw when concurrency is not a positive number', async () => {
+  test('should return error when concurrency is not a positive number', async () => {
     const items = [1, 2, 3];
     const task = async (n: number) => n;
     
-    await assert.rejects(
-      () => promisePool({ input: items, iteratorFn: task, concurrency: 0 }),
-      { message: 'concurrency must be a positive number' }
-    );
+    const { errors } = await promisePool({ input: items, iteratorFn: task, concurrency: 0 });
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'concurrency must be a positive number');
   });
 
-  test('should throw when concurrency is negative', async () => {
+  test('should return error when concurrency is negative', async () => {
     const items = [1, 2, 3];
     const task = async (n: number) => n;
     
-    await assert.rejects(
-      () => promisePool({ input: items, iteratorFn: task, concurrency: -5 }),
-      { message: 'concurrency must be a positive number' }
-    );
+    const { errors } = await promisePool({ input: items, iteratorFn: task, concurrency: -5 });
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'concurrency must be a positive number');
   });
 
-  test('should throw when concurrency is not a number', async () => {
+  test('should return error when concurrency is not a number', async () => {
     const items = [1, 2, 3];
     const task = async (n: number) => n;
     
-    await assert.rejects(
-      () => promisePool({ input: items, iteratorFn: task, concurrency: 'not a number' as any }),
-      { message: 'concurrency must be a positive number' }
-    );
+    const { errors } = await promisePool({ input: items, iteratorFn: task, concurrency: 'not a number' as any });
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'concurrency must be a positive number');
   });
 
-  test('should throw when errorHandler is not a function or undefined', async () => {
+  test('should return error when errorHandler is not a function or undefined', async () => {
     const items = [1, 2, 3];
     const task = async (n: number) => n;
     
-    await assert.rejects(
-      () => promisePool({ input: items, iteratorFn: task, concurrency: 2, errorHandler: 'not a function' as any }),
-      { message: 'errorHandler must be a function' }
-    );
+    const { errors } = await promisePool({ input: items, iteratorFn: task, concurrency: 2, errorHandler: 'not a function' as any });
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'errorHandler must be a function');
   });
 
   test('should allow undefined errorHandler', async () => {
     const items = [1, 2, 3];
     const task = async (n: number) => n * 2;
     
-    const { results } = await promisePool({ input: items, iteratorFn: task, concurrency: 2, errorHandler: undefined });
+    const { results, errors } = await promisePool({ input: items, iteratorFn: task, concurrency: 2, errorHandler: undefined });
     assert.strictEqual(results.length, 3);
+    assert.strictEqual(errors.length, 0);
   });
 });
 

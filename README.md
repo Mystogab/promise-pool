@@ -10,6 +10,7 @@ A lightweight, high-performance, and memory-efficient asynchronous pool for Java
 
 Unlike other libraries that use "batching" (waiting for the slowest task in a group to finish), **@mystogab/promise-pool** uses a **Dynamic Worker Queue**. As soon as a task finishes, a worker picks up the next one immediately.
 
+- **Safe by Default:** Never throws - validation and processing errors are returned in the result object
 - **Stream-Friendly:** Supports `Iterable` and `AsyncIterable`. Process millions of items without loading them all into memory.
 - **Smart Control:** Stop execution gracefully using `POOL_STOP_SIGNAL`.
 - **Dual Build:** Native support for ESM and CommonJS.
@@ -90,13 +91,24 @@ You can measure the performance in your own environment:
 
 ```javascript
 console.time('Pool Speed');
-await promisePool(data, tasks, 10);
+const { results, errors } = await promisePool({
+  input: data,
+  iteratorFn: task,
+  concurrency: 10
+});
 console.timeEnd('Pool Speed');
 ```
 
 ## License
 MIT © [@Mystogab]
 ## Changelog
+
+### **v3.0.0** | 2026-02-13
+- **BREAKING:** `promisePool` is now safe by default - never throws, all errors returned in result object
+- Validation errors are now gracefully returned in the `errors` array instead of throwing
+- Simplified API - removed distinction between throwing and safe variants
+- Better error handling for all error types (validation and processing)
+- Added comprehensive JSDoc documentation for IDE autocomplete and hover tooltips
 
 ### **v2.0.0** | 2026-02-13
 - **BREAKING:** Changed API to use named parameters instead of positional arguments
