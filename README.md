@@ -1,10 +1,15 @@
-# @mystogab/promise-pool 🚀
+<div align="center">
 
+![@mystogab/promise-pool 🚀](mgpp.svg)
+<br><br>
 A lightweight, high-performance, and memory-efficient asynchronous pool for JavaScript and TypeScript. Designed for **modern Node.js** environments (20+).
+<br><br>
 
 [![npm version](https://img.shields.io/npm/v/@mystogab/promise-pool)](https://www.npmjs.com)
 [![License: MIT](https://img.shields.io/npm/l/@mystogab/promise-pool)](https://opensource.org)
 ![Bundle Size](https://img.shields.io/bundlephobia/min/%40mystogab%2Fpromise-pool)
+<br><br>
+</div>
 
 ## Why Promise Pool?
 
@@ -36,7 +41,7 @@ const task = async (id) => {
 
 const { results } = await promisePool({
   input: items,
-  iteratorFn: task,
+  process: task,
   concurrency: 2
 });
 console.log(results);
@@ -50,9 +55,9 @@ import { promisePool, POOL_STOP_SIGNAL } from '@mystogab/promise-pool';
 
 const { results, stoppedPrematurely } = await promisePool({
   input: hugeDataset,
-  iteratorFn: processData,
+  process: processData,
   concurrency: 5,
-  errorHandler: async (error, item) => {
+  onError: async (error, item) => {
     if (error.status === 401) {
       console.error("Critical error! Stopping pool...");
       return POOL_STOP_SIGNAL;
@@ -76,9 +81,9 @@ const { results, stoppedPrematurely } = await promisePool({
 
 Options object parameters:
 - `input`: `Iterable<T> | AsyncIterable<T>` - The data to process.
-- `iteratorFn`: `(item: T) => Promise<R>` - The async function to run for each item.
+- `process`: `(item: T) => Promise<R>` - The async function to run for each item.
 - `concurrency`: `number` (Default: `2`) - Max number of simultaneous tasks.
-- `errorHandler`: `(error: any, item: T) => void | Promise<void> | typeof POOL_STOP_SIGNAL` (Optional) - Handler for custom logic on failure.
+- `onError`: `(error: any, item: T) => void | Promise<void> | typeof POOL_STOP_SIGNAL` (Optional) - Handler for custom logic on failure.
 
 Returns: `Promise<PoolResult<T, R>>`
 - `results`: `R[]` - Array of successful results in the order they were processed.
@@ -93,7 +98,7 @@ You can measure the performance in your own environment:
 console.time('Pool Speed');
 const { results, errors } = await promisePool({
   input: data,
-  iteratorFn: task,
+  process: task,
   concurrency: 10
 });
 console.timeEnd('Pool Speed');
@@ -105,6 +110,8 @@ MIT © [@Mystogab]
 
 ### **v3.0.0** | 2026-02-13
 - **BREAKING:** `promisePool` is now safe by default - never throws, all errors returned in result object
+- **BREAKING:** Renamed `iteratorFn` parameter to `process` for better clarity and intent
+- **BREAKING:** Renamed `errorHandler` parameter to `onError` to follow modern event-handler conventions
 - Validation errors are now gracefully returned in the `errors` array instead of throwing
 - Simplified API - removed distinction between throwing and safe variants
 - Better error handling for all error types (validation and processing)
