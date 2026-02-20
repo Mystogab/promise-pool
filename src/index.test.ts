@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { promisePool, POOL_STOP_SIGNAL } from './index.ts';
+import { promisePool, POOL_STOP_SIGNAL, TIMEOUT_SIGNAL } from './index.ts';
 
 describe('_validateInput', () => {
   test('should return error when input is missing', async () => {
@@ -159,5 +159,19 @@ describe('promisePool', () => {
     });
 
     assert.strictEqual(handlerWaited, true);
+  });
+
+  test('should handle timeouts', async () => {
+    const items = [1];
+    
+    const { errors } = await promisePool({
+      input: items,
+      process: async () => new Promise(res => setTimeout(res, 100)),
+      concurrency: 1,
+      timeout: 50
+    });
+
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0], TIMEOUT_SIGNAL);
   });
 });

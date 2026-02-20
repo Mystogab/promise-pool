@@ -1,6 +1,7 @@
 import assert from "node:assert";
 
 export const POOL_STOP_SIGNAL = Symbol('POOL_STOP_SIGNAL');
+export const TIMEOUT_SIGNAL = Symbol('timeout');
 
 type OnError<T, E = any> = (error: E, item: T) => void | Promise<void> | typeof POOL_STOP_SIGNAL;
 
@@ -17,6 +18,15 @@ const _validateInput = <T, R>(
   
   return null;
 };
+
+const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(TIMEOUT_SIGNAL), ms);
+  });
+
+  return Promise.race([promise, timeoutPromise]);
+};
+
 
 /**
  * Asynchronously processes an iterable or async iterable of items using a configurable number of concurrent workers.
@@ -62,11 +72,13 @@ export const promisePool = async <T, R>({
   process,
   concurrency = 2,
   onError,
+  timeout
 }: {
   input: Iterable<T> | AsyncIterable<T>;
   process: (input: T) => Promise<R>;
   concurrency?: number;
   onError?: OnError<T>;
+  timeout?: number;
 }) => {
   const results: R[] = [];
   const failedItems: T[] = [];
@@ -93,7 +105,7 @@ export const promisePool = async <T, R>({
       const item = value;
 
       try {
-        const res = await process(item);
+        const res = await (timeout ? withTimeout(process(item), timeout) : process(item));
         if (!isAborted) results.push(res);
       } catch (err) {
         errors.push(err as Error);
