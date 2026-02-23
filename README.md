@@ -48,27 +48,33 @@ const { results } = await promisePool({
 console.log(results) // ["Result 1", "Result 2", ...];
 ```
 
-## With Task Timeout
+## Error Mutation & Timeouts
 Ensure your pool doesn't hang if a task takes too long.
+
+You can now use onError to transform errors before they are collected. This is especially useful for replacing the internal TIMEOUT_SIGNAL with a standard Error object.
 
 ```typescript
 import { promisePool, TIMEOUT_SIGNAL } from '@mystogab/promise-pool';
 
-const { results, errors } = await promisePool({
+const { errors } = await promisePool({
   input: items,
   process: slowTask,
-  concurrency: 5,
   timeout: 2000, // 2 seconds limit per task
   onError: (error, item) => {
     if (error === TIMEOUT_SIGNAL) {
-      console.warn(`Item ${item.id} timed out!`);
+      // Mutate the error: return a standard Error instead of the Symbol
+      return new Error(`Task for item ${item.id} exceeded 2000ms`);
     }
   }
 });
+
+console.log(errors.every(err => err instanceof Error)); // true
 ```
 
 ## Advanced Error Handling & Early Stop
 You can stop the entire pool if a critical error occurs (e.g., Auth Token expired) using the `POOL_STOP_SIGNAL`.
+
+If a critical error occurs, return `POOL_STOP_SIGNAL`. If your `onError` handler itself throws an error, the pool will capture that error and stop automatically to prevent inconsistent states.
 
 ```typescript
 import { promisePool, POOL_STOP_SIGNAL } from '@mystogab/promise-pool';
@@ -129,6 +135,11 @@ console.timeEnd('Pool Speed');
 ## License
 MIT © [@Mystogab]
 ## Changelog
+
+### **v3.2.0** | 2026-02-23
+- **Feature**: Added Error Mutation. The onError handler can now return a new Error object to replace the original error in the final errors array.
+- **Fixed**: Improved onError safety. If the error handler itself throws an exception, the pool now captures that error and triggers a safe abort instead of crashing the process.
+- **Improved**: Documentation updated with mutation examples and logic flow.
 
 ### **v3.1.0** | 2026-02-20
 - **Added**: Support for `timeout` parameter to limit individual task execution time

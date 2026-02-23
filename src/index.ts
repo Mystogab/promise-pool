@@ -1,9 +1,9 @@
-import assert from "node:assert";
+import assert, { fail } from "node:assert";
 
 export const POOL_STOP_SIGNAL = Symbol('POOL_STOP_SIGNAL');
 export const TIMEOUT_SIGNAL = Symbol('timeout');
 
-type OnError<T, E = any> = (error: E, item: T) => void | Promise<void> | typeof POOL_STOP_SIGNAL;
+type OnError<T, E = any> = (error: E, item: T) => void | Promise<void> | typeof POOL_STOP_SIGNAL | typeof TIMEOUT_SIGNAL | Error | Promise<Error>;
 
 const _validateInput = <T, R>(
   input: Iterable<T> | AsyncIterable<T>,
@@ -108,11 +108,32 @@ export const promisePool = async <T, R>({
         const res = await (timeout ? withTimeout(process(item), timeout) : process(item));
         if (!isAborted) results.push(res);
       } catch (err) {
-        errors.push(err as Error);
-        failedItems.push(item);
-        if (onError) {
-          const action = await onError(err, item);
-          if (action === POOL_STOP_SIGNAL) isAborted = true;
+
+        if (!onError) {
+          errors.push(err as Error);
+          failedItems.push(item);
+          continue;
+        }
+
+        try {
+          const errHandlerResult = await onError(err, item);
+          if (errHandlerResult === POOL_STOP_SIGNAL) {
+            isAborted = true;
+            errors.push(err as Error);
+            failedItems.push(item);
+            continue;
+          }
+          if (errHandlerResult instanceof Error) {
+            errors.push(errHandlerResult);
+            failedItems.push(item);
+            continue;
+          }
+          errors.push(err as Error);
+          failedItems.push(item);
+        } catch (errorHandlerErr) {
+          isAborted = true;
+          errors.push(errorHandlerErr as Error);
+          failedItems.push(item);
         }
       }
     }

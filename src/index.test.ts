@@ -121,21 +121,24 @@ describe('promisePool', () => {
   });
 
   test('should stop execution when POOL_STOP_SIGNAL is returned', async () => {
-    const items = [1, 2, 3];
+const items = [1, 2, 3];
     let callCount = 0;
 
-    await promisePool({
+    const { errors, stoppedPrematurely, failedItems } = await promisePool({
       input: items,
-      process: async () => { 
+      process: async (n) => { 
         callCount++; 
-        throw new Error('Stop'); 
+        throw new Error(`Stop at ${n}`); 
       },
       concurrency: 1,
-      // Asegúrate de que retorne exactamente el símbolo
       onError: () => POOL_STOP_SIGNAL 
     });
 
-    assert.strictEqual(callCount, 1);
+    assert.strictEqual(callCount, 1, 'Should only process the first item');
+    assert.strictEqual(stoppedPrematurely, true, 'stoppedPrematurely should be true');
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'Stop at 1');
+    assert.deepStrictEqual(failedItems, [1]);
   });
 
 
@@ -173,5 +176,60 @@ describe('promisePool', () => {
 
     assert.strictEqual(errors.length, 1);
     assert.strictEqual(errors[0], TIMEOUT_SIGNAL);
+  });
+
+  test('should allow onError to mutate/replace the original error', async () => {
+    const items = [1];
+    
+    const { errors, failedItems } = await promisePool({
+      input: items,
+      process: async () => { throw new Error('Original Error'); },
+      concurrency: 1,
+      onError: () => new Error('Mutated Error') // Returning a new error
+    });
+
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'Mutated Error', 'The error should be replaced');
+    assert.deepStrictEqual(failedItems, [1]);
+  });
+
+  test('should safely abort and capture the error if onError itself throws', async () => {
+    const items = [1, 2, 3];
+    let callCount = 0;
+
+    const { errors, stoppedPrematurely, failedItems } = await promisePool({
+      input: items,
+      process: async (n) => { 
+        callCount++;
+        throw new Error(`Process Error ${n}`); 
+      },
+      concurrency: 1,
+      onError: () => { throw new Error('Handler Crash'); } // Handler fails
+    });
+
+    assert.strictEqual(callCount, 1, 'Should abort immediately after handler crashes');
+    assert.strictEqual(stoppedPrematurely, true, 'stoppedPrematurely should be true');
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'Handler Crash', 'Should capture the handler error');
+    assert.deepStrictEqual(failedItems, [1]);
+  });
+
+  test('should allow replacing TIMEOUT_SIGNAL with a standard Error', async () => {
+    const items = [1];
+    
+    const { errors } = await promisePool({
+      input: items,
+      process: async () => new Promise(res => setTimeout(res, 100)),
+      concurrency: 1,
+      timeout: 10,
+      onError: (err) => {
+        if (err === TIMEOUT_SIGNAL) {
+          return new Error('Custom timeout error');
+        }
+      }
+    });
+
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'Custom timeout error', 'Timeout symbol should be replaced');
   });
 });
