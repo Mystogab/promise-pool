@@ -1,6 +1,6 @@
 {
   "name": "@mystogab/promise-pool",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "A lightweight, high-performance, and memory-efficient asynchronous pool for JavaScript and TypeScript",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
