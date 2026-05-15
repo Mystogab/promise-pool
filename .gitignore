@@ -31,3 +31,6 @@ yarn-debug.log*
 # Coverage
 coverage/
 .nyc_output/
+
+# Sensible Docs
+skills/MISSING_FEATURES.md

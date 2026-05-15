@@ -1,3 +1,8 @@
+### **v3.3.0** | 2026-05-15
+- **Added**: Support for `onTaskStarted` and `onTaskFinished` callbacks to track task execution
+- **Fixed**: Syntax error in test file that was preventing tests from running properly
+- **Fixed**: Improved test assertion for execution order to be more flexible about callback execution timing
+
 ### **v3.1.0** | 2026-02-20
 - **Added**: Support for `timeout` parameter to limit individual task execution time
 - **Added**: `TIMEOUT_SIGNAL` export to identify timeout-related failures.

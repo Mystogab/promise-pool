@@ -48,6 +48,31 @@ const { results } = await promisePool({
 console.log(results) // ["Result 1", "Result 2", ...];
 ```
 
+## Using onTaskStarted and onTaskFinished callbacks
+
+```typescript
+import { promisePool } from '@mystogab/promise-pool';
+
+const items = [1, 2, 3, 4, 5];
+const task = async (id) => {
+  await new Promise(r => setTimeout(r, 100));
+  return `Result ${id}`;
+};
+
+const { results } = await promisePool({
+  input: items,
+  process: task,
+  concurrency: 2,
+  onTaskStarted: (item, index) => {
+    console.log(`Starting task ${index}: ${item}`);
+  },
+  onTaskFinished: (item, index, result) => {
+    console.log(`Finished task ${index}: ${item} with result ${result}`);
+  }
+});
+console.log(results) // ["Result 1", "Result 2", ...];
+```
+
 ## Error Mutation & Timeouts
 Ensure your pool doesn't hang if a task takes too long.
 
@@ -136,9 +161,10 @@ console.timeEnd('Pool Speed');
 MIT © [@Mystogab]
 ## Changelog
 
-### **v3.2.0** | 2026-02-23
-- **Feature**: Added Error Mutation. The onError handler can now return a new Error object to replace the original error in the final errors array.
-- **Fixed**: Improved onError safety. If the error handler itself throws an exception, the pool now captures that error and triggers a safe abort instead of crashing the process.
-- **Improved**: Documentation updated with mutation examples and logic flow.
+### **v3.3.0** | 2026-05-15
+- **Feature**: Added support for `onTaskStarted` and `onTaskFinished` callbacks to track task execution
+- **Fixed**: Syntax error in test file that was preventing tests from running properly
+- **Fixed**: Improved test assertion for execution order to be more flexible about callback execution timing
+
 
 [[ EXTENDED CHANGELOG ]](CHANGELOG.md)

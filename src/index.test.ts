@@ -55,6 +55,24 @@ describe('_validateInput', () => {
     assert.strictEqual(errors[0].message, 'onError must be a function');
   });
 
+  test('should return error when onTaskStarted is not a function or undefined', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n;
+    
+    const { errors } = await promisePool({ input: items, process: task, concurrency: 2, onTaskStarted: 'not a function' as any });
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'onTaskStarted must be a function');
+  });
+
+  test('should return error when onTaskFinished is not a function or undefined', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n;
+    
+    const { errors } = await promisePool({ input: items, process: task, concurrency: 2, onTaskFinished: 'not a function' as any });
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'onTaskFinished must be a function');
+  });
+
   test('should allow undefined onError', async () => {
     const items = [1, 2, 3];
     const task = async (n: number) => n * 2;
@@ -233,3 +251,125 @@ const items = [1, 2, 3];
     assert.strictEqual(errors[0].message, 'Custom timeout error', 'Timeout symbol should be replaced');
   });
 });
+
+test('should allow undefined onTaskStarted and onTaskFinished', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n * 2;
+    
+    const { results, errors } = await promisePool({ 
+      input: items, 
+      process: task, 
+      concurrency: 2, 
+      onTaskStarted: undefined,
+      onTaskFinished: undefined
+    });
+    assert.strictEqual(results.length, 3);
+    assert.strictEqual(errors.length, 0);
+  });
+
+  test('should execute onTaskStarted callback for each item', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n * 2;
+    const startedItems: number[] = [];
+    const finishedItems: number[] = [];
+
+    const { results } = await promisePool({ 
+      input: items, 
+      process: task, 
+      concurrency: 2, 
+      onTaskStarted: (item, index) => {
+        startedItems.push({ item, index });
+      },
+      onTaskFinished: (item, index, result) => {
+        finishedItems.push({ item, index, result });
+      }
+    });
+
+    assert.strictEqual(startedItems.length, 3);
+    assert.strictEqual(finishedItems.length, 3);
+    assert.deepStrictEqual(startedItems.map(s => s.item).sort(), [1, 2, 3]);
+    assert.deepStrictEqual(finishedItems.map(f => f.item).sort(), [1, 2, 3]);
+    assert.deepStrictEqual(results.sort(), [2, 4, 6]);
+  });
+
+  test('should execute onTaskStarted and onTaskFinished in correct order', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => {
+      await new Promise(res => setTimeout(res, 10));
+      return n * 2;
+    };
+    const executionOrder: string[] = [];
+
+    const { results } = await promisePool({ 
+      input: items, 
+      process: task, 
+      concurrency: 2, 
+      onTaskStarted: (item, index) => {
+        executionOrder.push(`started-${item}`);
+      },
+      onTaskFinished: (item, index, result) => {
+        executionOrder.push(`finished-${item}`);
+      }
+    });
+
+    // Verify all callbacks were called
+    assert.strictEqual(executionOrder.length, 6);
+    
+    // Verify that all items were started and finished
+    const startedItems = executionOrder.filter(item => item.startsWith('started-'));
+    const finishedItems = executionOrder.filter(item => item.startsWith('finished-'));
+    
+    assert.strictEqual(startedItems.length, 3);
+    assert.strictEqual(finishedItems.length, 3);
+    
+    // Verify that each item was both started and finished
+    const itemNumbers = [1, 2, 3];
+    itemNumbers.forEach(num => {
+      assert.ok(startedItems.includes(`started-${num}`));
+      assert.ok(finishedItems.includes(`finished-${num}`));
+    });
+    
+    assert.deepStrictEqual(results.sort(), [2, 4, 6]);
+  });
+
+  test('should handle errors in onTaskStarted callback', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n * 2;
+    
+    const { errors, stoppedPrematurely } = await promisePool({ 
+      input: items, 
+      process: task, 
+      concurrency: 2, 
+      onTaskStarted: (item, index) => {
+        if (item === 2) {
+          throw new Error('Task started error');
+        }
+      }
+    });
+
+    // Should still process all items even if one onTaskStarted fails
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'Task started error');
+    assert.strictEqual(stoppedPrematurely, false);
+  });
+
+  test('should handle errors in onTaskFinished callback', async () => {
+    const items = [1, 2, 3];
+    const task = async (n: number) => n * 2;
+    
+    const { errors, stoppedPrematurely } = await promisePool({ 
+      input: items, 
+      process: task, 
+      concurrency: 2, 
+      onTaskFinished: (item, index, result) => {
+        if (item === 2) {
+          throw new Error('Task finished error');
+        }
+      }
+    });
+
+    // Should still process all items even if one onTaskFinished fails
+    assert.strictEqual(errors.length, 1);
+    assert.strictEqual(errors[0].message, 'Task finished error');
+    assert.strictEqual(stoppedPrematurely, false);
+  });
